@@ -175,7 +175,7 @@ def epoch_pass(
                         save_dict["action_video_seq_recall_rate_mean"]*100))
 
     
-    if not tensorboard_writer is None:
+    if tensorboard_writer is not None:
         for k,v in save_dict.items():
                 if k in losses.keys() or k in ['learning_rate','total_loss']:
                     print(prefix+'/'+k,v,epoch)
