@@ -122,7 +122,7 @@ if __name__ == "__main__":
     parser.add_argument('--experiment_tag',default='htt')    
     parser.add_argument('--is_demo', action="store_true", help="show demo result")  
 
-    parser.add_argument('--dataset_folder',default='../fpha/')
+    parser.add_argument('--dataset_folder',default='~/Datasets/FPHAB/')
     parser.add_argument('--cache_folder',default='./ws/ckpts/')
     parser.add_argument('--resume_path',default='./ws/ckpts/htt_fpha/checkpoint_45.pth')
 

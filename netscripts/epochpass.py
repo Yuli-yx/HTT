@@ -7,6 +7,17 @@ from netscripts import position_evaluator
 from netscripts.classification_evaluator import SequenceClassificationEvaluator, FrameClassificationEvaluator
 from netscripts.position_evaluator import ZimEval
 from netscripts.utils import draw_single_run
+from datasets.queries import BaseQueries, TransQueries 
+
+def eval_speed(model, loader):
+    model.eval()
+    batch_sizes = [1, 2, 4, 8, 16, 32, 64]
+    for batch_size in batch_sizes:
+        data = loader[]
+    for batch_idx, batch in enumerate(tqdm(loader)): 
+        with torch.no_grad():
+            loss, results, losses = model(batch)
+
 
 def epoch_pass(
     loader,
@@ -24,12 +35,16 @@ def epoch_pass(
     is_single_hand,
     is_demo,
     epoch,
+    eval_speed=False
 
 ):
     if train:
         prefix = "train"
     else:
         prefix = "val"
+        
+    if eval_speed:
+        model.eval()
 
     if is_single_hand:
         evaluators = {"joints3d": ZimEval(num_kp=21),"joints3d_cent":ZimEval(num_kp=20)}  
