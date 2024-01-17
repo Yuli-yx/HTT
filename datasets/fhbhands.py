@@ -78,6 +78,7 @@ class FHBHands(object):
 
         self.reduce_res = True
         small_rgb = os.path.join(self.root, "Video_files_480")
+        print(small_rgb)
         if os.path.exists(small_rgb) and self.reduce_res: 
             self.rgb_root = small_rgb
             self.reduce_factor = 1 / 4

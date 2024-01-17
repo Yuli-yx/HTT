@@ -14,21 +14,28 @@ def eval_inf_speed(model, loader, num_iterations=100):
     import random
     import time
     model.eval()
-    batch_sizes = [1, 2, 4, 8]
+    batch_sizes = [8]
+    print('Start evaluating model inference time.')
     for batch_size in batch_sizes:
+        
         index = random.randint(0, len(loader) - 1)
+        index = 3
         loader_iter = iter(loader)
         for i in range(index + 1):
             data = next(loader_iter)
-    
+        # print(loader[BaseQueries.JOINTS3D].shape)
+        # for k, v in data.items():
+        #     print(f'{k}')
+        
         for _ in range(10):
-            model(data)
+            with torch.no_grad():
+                model(data)
         
         torch.cuda.synchronize()
         memory_before = torch.cuda.memory_allocated()
         
         start_time = time.time()
-        for _ in range(num_iterations):
+        for _ in tqdm(range(num_iterations)):
             with torch.no_grad():
                 model(data)
             torch.cuda.synchronize()
@@ -38,15 +45,10 @@ def eval_inf_speed(model, loader, num_iterations=100):
 
         # 显存占用测量后
         memory_after = torch.cuda.memory_allocated()
-
         memory_usage = (memory_after - memory_before) / (1024 ** 2)  # 转换为MB
-            
-        for batch_idx, batch in enumerate(tqdm(loader)): 
-            with torch.no_grad():
-                loss, results, losses = model(batch)
-        
-        print(f"batch_size: {batch_size}, average_time: {average_time:.4f} s, GPU_memory_usage: {memory_usage:.2f} MB")
-
+           
+        # print(f"batch_size: {batch_size}, average_time: {average_time:.4f} s, GPU_memory_usage: {memory_usage:.2f} MB")
+        print(f"batch_size: {batch_size}, average_time: {average_time:.4f} s")
         torch.cuda.empty_cache()
 
 

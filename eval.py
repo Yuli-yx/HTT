@@ -3,7 +3,7 @@ from datetime import datetime
 
 from matplotlib import pyplot as plt
 import torch
-
+import os
 from libyana.exputils.argutils import save_args
 from libyana.modelutils import freeze
 from libyana.randomutils import setseeds
@@ -82,11 +82,14 @@ def main(args):
                 pose_loss=args.pose_loss)
 
     epoch=reloadmodel.reload_model(model,args.resume_path)
-    use_multiple_gpu= torch.cuda.device_count() > 1
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+    # use_multiple_gpu= torch.cuda.device_count() > 1
+    use_multiple_gpu = False
     if use_multiple_gpu:
         assert False, "Not implement- Eval with multiple gpus!"
         #model = torch.nn.DataParallel(model).cuda()
     else:
+        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
         model.cuda()
 
     freeze.freeze_batchnorm_stats(model)
@@ -125,7 +128,7 @@ if __name__ == "__main__":
     parser.add_argument('--is_demo', action="store_true", help="show demo result")
     parser.add_argument('--is_eval_speed', default=False, type=bool, help="evaluate model inference speed and GPU memory usage")  
 
-    parser.add_argument('--dataset_folder',default='~/Datasets/FPHAB/')
+    parser.add_argument('--dataset_folder',default='/media/mldadmin/home/s123mdg31_07/Datasets/FPHAB/')
     parser.add_argument('--cache_folder',default='./ws/ckpts/')
     parser.add_argument('--resume_path',default='./ws/ckpts/htt_fpha/checkpoint_45.pth')
 
