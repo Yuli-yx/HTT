@@ -10,7 +10,7 @@ from netscripts.utils import draw_single_run
 from datasets.queries import BaseQueries, TransQueries 
 
 
-def eval_speed(model, loader, num_iterations=100):
+def eval_inf_speed(model, loader, num_iterations=100):
     import random
     import time
     model.eval()
@@ -67,15 +67,15 @@ def epoch_pass(
     is_demo,
     epoch,
     eval_speed=False
-
-):
+    ):
     if train:
         prefix = "train"
     else:
         prefix = "val"
         
     if eval_speed:
-        model.eval()
+        eval_inf_speed(model, loader, num_iterations=100)
+        return 0
 
     if is_single_hand:
         evaluators = {"joints3d": ZimEval(num_kp=21),"joints3d_cent":ZimEval(num_kp=20)}  
