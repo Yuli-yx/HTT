@@ -9,6 +9,7 @@ from models.actionbranch import ActionClassificationBranch
 from models.utils import  To25DBranch,compute_hand_loss,loss_str2func
 from models.mlp import MultiLayerPerceptron
 from datasets.queries import BaseQueries, TransQueries 
+from models.ViT import VisionTransformer, CONFIGS
 
 
 class ResNet_(torch.nn.Module):
@@ -27,10 +28,11 @@ class ResNet_(torch.nn.Module):
     def forward(self, image):
         features, res_layer5 = self.base_net(image)
         return features, res_layer5
- 
+
 
 class TemporalNet(torch.nn.Module):
-    def __init__(self,  is_single_hand,
+    def __init__(self,  config,
+                        is_single_hand,
                         transformer_d_model,
                         transformer_dropout,
                         transformer_nhead,
@@ -69,6 +71,7 @@ class TemporalNet(torch.nn.Module):
         
         #Image Feature
         self.meshregnet = ResNet_(resnet_version=18)
+        self.vit = VisionTransformer()
         self.transformer_pe=PositionalEncoding(d_model=transformer_d_model) 
 
         self.transformer_pose=Transformer_Encoder(d_model=transformer_d_model, 

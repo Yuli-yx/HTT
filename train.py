@@ -12,6 +12,7 @@ from libyana.randomutils import setseeds
 
 from datasets import collate
 from models.htt import TemporalNet
+from models.ViT import CONFIGS
 from netscripts import epochpass
 from netscripts import reloadmodel, get_dataset 
 from torch.utils.tensorboard import SummaryWriter
@@ -33,7 +34,7 @@ def main(args):
     # Initialize local checkpoint folder
     save_args(args, exp_id, "opt")
     board_writer=SummaryWriter(log_dir=exp_id) 
-    
+    config = CONFIGS[args.model_type]
 
 
 
@@ -66,23 +67,24 @@ def main(args):
     dataset_info=train_dataset.pose_dataset
 
     #Re-load pretrained weights  
-    model= TemporalNet(dataset_info=dataset_info,
+    model= TemporalNet(config=config,                                                   #ViT-B_16
+                dataset_info=dataset_info,
                 is_single_hand=args.train_dataset!="h2ohands",
-                transformer_num_encoder_layers_action=args.enc_action_layers,
-                transformer_num_encoder_layers_pose=args.enc_pose_layers,
-                transformer_d_model=args.hidden_dim,
-                transformer_dropout=args.dropout,
-                transformer_nhead=args.nheads,
-                transformer_dim_feedforward=args.dim_feedforward,
-                transformer_normalize_before=True,
-                lambda_action_loss=args.lambda_action_loss,
-                lambda_hand_2d=args.lambda_hand_2d, 
-                lambda_hand_z=args.lambda_hand_z, 
-                ntokens_pose= args.ntokens_pose,
-                ntokens_action=args.ntokens_action,
-                trans_factor=args.trans_factor,
-                scale_factor=args.scale_factor,
-                pose_loss=args.pose_loss)
+                transformer_num_encoder_layers_action=args.enc_action_layers,           #2
+                transformer_num_encoder_layers_pose=args.enc_pose_layers,               #2
+                transformer_d_model=args.hidden_dim,                                    #512
+                transformer_dropout=args.dropout,                                       #0.0
+                transformer_nhead=args.nheads,                                      #8                           
+                transformer_dim_feedforward=args.dim_feedforward,                   #2048                          
+                transformer_normalize_before=True,                                                  
+                lambda_action_loss=args.lambda_action_loss,                         #1                                        
+                lambda_hand_2d=args.lambda_hand_2d,                                 #1
+                lambda_hand_z=args.lambda_hand_z,                                   #100
+                ntokens_pose= args.ntokens_pose,                                    #16
+                ntokens_action=args.ntokens_action,                                 #128
+                trans_factor=args.trans_factor,                                     #100                     
+                scale_factor=args.scale_factor,                                     #0.0001 
+                pose_loss=args.pose_loss)                                           #l1
 
 
 
@@ -167,6 +169,12 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_folder',default='../fpha/')
     parser.add_argument('--cache_folder',default='./ws/ckpts/')
     parser.add_argument('--resume_path',default=None)
+    
+    # ViT parameters
+    parser.add_argument("--model_type", choices=["ViT-B_16", "ViT-B_32", "ViT-L_16",
+                                                 "ViT-L_32", "ViT-H_14", "R50-ViT-B_16"],
+                        default="ViT-B_16",
+                        help="Which variant to use.")
 
     #Transformer parameters
     parser.add_argument("--ntokens_pose", type=int, default=16, help="N tokens for P")
@@ -190,7 +198,7 @@ if __name__ == "__main__":
     
 
     parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
-    parser.add_argument("--workers", type=int, default=16, help="Number of workers for multiprocessing")
+    parser.add_argument("--workers", type=int, default=8, help="Number of workers for multiprocessing")
     parser.add_argument("--pyapt_id")
     parser.add_argument("--epochs", type=int, default=45)
     parser.add_argument("--lr_decay_gamma", type=float, default= 0.5,help="Learning rate decay factor, if 1, no decay is effectively applied")

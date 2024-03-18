@@ -72,8 +72,8 @@ class To25DBranch(nn.Module):
         batch_size = scaletrans.shape[0]
         trans = scaletrans[:, :, :2]
         scale = scaletrans[:, :, 2]
-        final_trans = trans.view(batch_size,-1, 2)* self.trans_factor
-        final_scale = scale.view(batch_size,-1, 1)* self.scale_factor
+        final_trans = trans.view(batch_size,-1, 2)* self.trans_factor               # xy0
+        final_scale = scale.view(batch_size,-1, 1)* self.scale_factor               # z0
         height, width = tuple(sample[TransQueries.IMAGE].shape[2:])
         camintr = sample[TransQueries.CAMINTR].cuda() 
         

@@ -74,7 +74,7 @@ class FHBHands(object):
         self.root = dataset_folder
         self.info_root = os.path.join(self.root, "Subjects_info")
         self.info_split = os.path.join(self.root, "data_split_action_recognition.txt")
-        self.info_video_order_for_supervision= os.path.join(self.root,'video_annotation.json') 
+        self.info_video_order_for_supervision= os.path.join(self.root,'video_annotation.json')
 
         self.reduce_res = True
         small_rgb = os.path.join(self.root, "Video_files_480")
