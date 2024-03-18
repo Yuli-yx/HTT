@@ -52,7 +52,8 @@ def main(args):
         ntokens_action=args.ntokens_action,
         spacing=args.spacing,
         is_shifting_window=False,
-        split_type="actions"
+        split_type="actions",
+        input_res=(224, 224)
     )
 
 
@@ -169,7 +170,7 @@ if __name__ == "__main__":
     torch.multiprocessing.set_sharing_strategy("file_system")
     parser = argparse.ArgumentParser() 
     parser.add_argument('--experiment_tag',default='hello') 
-    parser.add_argument('--dataset_folder',default='../fpha/')
+    parser.add_argument('--dataset_folder',default='../../Datasets/FPHAB/')
     parser.add_argument('--cache_folder',default='./ws/ckpts/')
     parser.add_argument('--resume_path',default=None)
     
@@ -198,12 +199,12 @@ if __name__ == "__main__":
     # Training parameters
     parser.add_argument("--train_cont", action="store_true", help="Continue from previous training")
     parser.add_argument("--manual_seed", type=int, default=0)
-    parser.add_argument("--multi_gpu", default="0,1", help="Which GPUs to use")
+    parser.add_argument("--multi_gpu", default="0, 2", help="Which GPUs to use")
     
 
     
 
-    parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
     parser.add_argument("--workers", type=int, default=8, help="Number of workers for multiprocessing")
     parser.add_argument("--pyapt_id")
     parser.add_argument("--epochs", type=int, default=45)
@@ -226,7 +227,7 @@ if __name__ == "__main__":
                         help="Number of encoding layers in A")
     parser.add_argument('--dim_feedforward', default=2048, type=int,
                         help="Intermediate size of the feedforward layers in the transformer blocks")
-    parser.add_argument('--hidden_dim', default=512, type=int,
+    parser.add_argument('--hidden_dim', default=768, type=int,
                         help="Size of the embeddings (dimension of the transformer)")
     parser.add_argument('--dropout', default=0.0, type=float,
                         help="Dropout applied in the transformer")

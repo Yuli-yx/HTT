@@ -265,6 +265,7 @@ class VisionTransformer(nn.Module):
         self.num_classes = num_classes
         self.zero_head = zero_head
         self.classifier = config.classifier
+        self.return_feat = return_feat
 
         self.transformer = Transformer(config, img_size, vis)
         self.head = Linear(config.hidden_size, num_classes)
@@ -272,10 +273,12 @@ class VisionTransformer(nn.Module):
 
     def forward(self, x, labels=None):
         x, attn_weights = self.transformer(x)
-        logits = self.head(x[:, 0])
+        
 
         if self.return_feat:
             return x[:, 0]
+
+        logits = self.head(x[:, 0])
         if labels is not None:
             loss_fct = CrossEntropyLoss()
             loss = loss_fct(logits.view(-1, self.num_classes), labels.view(-1))

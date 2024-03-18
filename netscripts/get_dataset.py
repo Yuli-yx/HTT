@@ -19,7 +19,8 @@ def get_dataset_htt(
     no_augm,
     center_jittering,
     scale_jittering,
-    split_type
+    split_type,
+    input_res=(480, 270)
 ):
 
 
@@ -30,8 +31,10 @@ def get_dataset_htt(
                                         ntokens_action=ntokens_action, 
                                         spacing=spacing, 
                                         is_shifting_window=is_shifting_window,
-                                        split_type=split_type,)
-        input_res = (480, 270)
+                                        split_type=split_type,
+                                        input_res=input_res,
+                                        )
+        
     elif dataset_name=='h2ohands':
         pose_dataset = h2ohands.H2OHands(dataset_folder=dataset_folder,
                                     split=split,
@@ -40,12 +43,10 @@ def get_dataset_htt(
                                     spacing=spacing,
                                     is_shifting_window=is_shifting_window,
                                     split_type=split_type)
-        input_res = (480, 270)
+        # input_res = (480, 270)
     
     else:
         raise ValueError(f"Unknown dataset {dataset_name}")
-
-
 
 
     dataset = seqset_htt.SeqSet(
