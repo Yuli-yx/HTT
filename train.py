@@ -17,6 +17,8 @@ from netscripts import epochpass
 from netscripts import reloadmodel, get_dataset 
 from torch.utils.tensorboard import SummaryWriter
 from netscripts.get_dataset import DataLoaderX 
+import numpy as np
+import os
 plt.switch_backend("agg")
 print('********')
 print('Lets start')
@@ -36,7 +38,7 @@ def main(args):
     board_writer=SummaryWriter(log_dir=exp_id) 
     config = CONFIGS[args.model_type]
 
-
+    
 
     print("**** Lets train on", args.train_dataset, args.train_split)
     train_dataset, _ = get_dataset.get_dataset_htt(
@@ -87,7 +89,7 @@ def main(args):
                 pose_loss=args.pose_loss)                                           #l1
 
 
-
+    model.vit.load_from(np.load(args.vit_pretrained_path))   #load pretrained weights
                     
     if args.train_cont:
         epoch=reloadmodel.reload_model(model,args.resume_path)       
@@ -96,6 +98,7 @@ def main(args):
     epoch+=1
     
     #to multiple GPUs
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.multi_gpu
     use_multiple_gpu= torch.cuda.device_count() > 1
     if use_multiple_gpu:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
@@ -175,6 +178,8 @@ if __name__ == "__main__":
                                                  "ViT-L_32", "ViT-H_14", "R50-ViT-B_16"],
                         default="ViT-B_16",
                         help="Which variant to use.")
+    parser.add_argument("--vit_pretrained_path", default="./pretrained/ViT-B_16.npz", 
+                        help="Path to pretrained ViT weights")
 
     #Transformer parameters
     parser.add_argument("--ntokens_pose", type=int, default=16, help="N tokens for P")
@@ -193,6 +198,7 @@ if __name__ == "__main__":
     # Training parameters
     parser.add_argument("--train_cont", action="store_true", help="Continue from previous training")
     parser.add_argument("--manual_seed", type=int, default=0)
+    parser.add_argument("--multi_gpu", default="0,1", help="Which GPUs to use")
     
 
     
