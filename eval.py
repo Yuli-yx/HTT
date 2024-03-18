@@ -126,7 +126,7 @@ if __name__ == "__main__":
     # Base params
     parser.add_argument('--experiment_tag',default='htt')    
     parser.add_argument('--is_demo', action="store_true", help="show demo result")
-    parser.add_argument('--is_eval_speed', default=False, type=bool, help="evaluate model inference speed and GPU memory usage")  
+    parser.add_argument('--is_eval_speed', default=True, type=bool, help="evaluate model inference speed and GPU memory usage")  
 
     parser.add_argument('--dataset_folder',default='/media/mldadmin/home/s123mdg31_07/Datasets/FPHAB/')
     parser.add_argument('--cache_folder',default='./ws/ckpts/')

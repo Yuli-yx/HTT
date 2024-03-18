@@ -128,4 +128,5 @@ def convert_dataset_split_to_lmdb(dataset_name,dataset_folder,split):
     
 if __name__ == '__main__':
     # resize_imgs_to_480_270_fpha(fhb_root='/media/mldadmin/home/s123mdg31_07/Datasets/FPHAB')
-    convert_dataset_split_to_lmdb('fhbhands', '~/Datasets/FPHAB')
+    convert_dataset_split_to_lmdb('fhbhands', '/media/mldadmin/home/s123mdg31_07/Datasets/FPHAB', 'train')
+    convert_dataset_split_to_lmdb('fhbhands', '/media/mldadmin/home/s123mdg31_07/Datasets/FPHAB', 'test')

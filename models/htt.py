@@ -114,7 +114,7 @@ class TemporalNet(torch.nn.Module):
  
     
     def forward(self, batch_flatten,  verbose=False):           
-        flatten_images=batch_flatten[TransQueries.IMAGE].cuda()
+        flatten_images=batch_flatten[TransQueries.IMAGE].cuda() # (1024, 3, 270, 480)
         # print(flatten_images.shape)
         #Loss
         total_loss = torch.Tensor([0]).cuda()
@@ -123,25 +123,25 @@ class TemporalNet(torch.nn.Module):
 
 
         #resnet for by-frame
-        flatten_in_feature, _ =self.meshregnet(flatten_images) 
+        flatten_in_feature, _ =self.meshregnet(flatten_images) # (1024, 512)
         
         #Block P
-        batch_seq_pin_feature=flatten_in_feature.contiguous().view(-1,self.ntokens_pose,flatten_in_feature.shape[-1])
+        batch_seq_pin_feature=flatten_in_feature.contiguous().view(-1,self.ntokens_pose,flatten_in_feature.shape[-1]) # (64, 16, 512)
         batch_seq_pin_pe=self.transformer_pe(batch_seq_pin_feature)
          
         batch_seq_pweights=batch_flatten['not_padding'].cuda().float().view(-1,self.ntokens_pose)
         batch_seq_pweights[:,0]=1.
         batch_seq_pmasks=(1-batch_seq_pweights).bool()
          
-        batch_seq_pout_feature,_=self.transformer_pose(src=batch_seq_pin_feature, src_pos=batch_seq_pin_pe,
+        batch_seq_pout_feature,_=self.transformer_pose(src=batch_seq_pin_feature, src_pos=batch_seq_pin_pe,  # （64, 16, 512）
                             key_padding_mask=batch_seq_pmasks, verbose=False)
  
  
-        flatten_pout_feature=torch.flatten(batch_seq_pout_feature,start_dim=0,end_dim=1)
+        flatten_pout_feature=torch.flatten(batch_seq_pout_feature,start_dim=0,end_dim=1) #(1024, 512)
         
         #hand pose
-        flatten_hpose=self.image_to_hand_pose(flatten_pout_feature)
-        flatten_hpose=flatten_hpose.view(-1,self.num_joints,3)
+        flatten_hpose=self.image_to_hand_pose(flatten_pout_feature)     # (1024, 63)
+        flatten_hpose=flatten_hpose.view(-1,self.num_joints,3)          # (1024, 21, 3)
         flatten_hpose_25d_3d=self.postprocess_hand_pose(sample=batch_flatten,scaletrans=flatten_hpose,verbose=verbose) 
 
         weights_hand_loss=batch_flatten['not_padding'].cuda().float()
