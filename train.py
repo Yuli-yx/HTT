@@ -199,12 +199,12 @@ if __name__ == "__main__":
     # Training parameters
     parser.add_argument("--train_cont", action="store_true", help="Continue from previous training")
     parser.add_argument("--manual_seed", type=int, default=0)
-    parser.add_argument("--multi_gpu", default="0, 2", help="Which GPUs to use")
+    parser.add_argument("--multi_gpu", default="0, 3", help="Which GPUs to use")
     
 
     
 
-    parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
     parser.add_argument("--workers", type=int, default=8, help="Number of workers for multiprocessing")
     parser.add_argument("--pyapt_id")
     parser.add_argument("--epochs", type=int, default=45)
