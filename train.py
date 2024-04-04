@@ -111,8 +111,8 @@ def main(args):
 
 
     print('**** Parameters to update ****')
-    for i, (n,p) in enumerate(filter(lambda p: p[1].requires_grad, model.named_parameters())):
-        print(i, n,p.size()) 
+    # for i, (n,p) in enumerate(filter(lambda p: p[1].requires_grad, model.named_parameters())):
+    #     print(i, n,p.size()) 
 
     
     #Optimizer
@@ -199,7 +199,7 @@ if __name__ == "__main__":
     # Training parameters
     parser.add_argument("--train_cont", action="store_true", help="Continue from previous training")
     parser.add_argument("--manual_seed", type=int, default=0)
-    parser.add_argument("--multi_gpu", default="0, 3", help="Which GPUs to use")
+    parser.add_argument("--multi_gpu", default="2, 3", help="Which GPUs to use")
     
 
     

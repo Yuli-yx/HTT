@@ -47,7 +47,8 @@ def main(args):
         ntokens_action=args.ntokens_action,
         spacing=args.spacing,
         is_shifting_window=True,
-        split_type="actions"
+        split_type="actions", 
+        input_res=(224, 224)
     )
 
 
@@ -83,17 +84,18 @@ def main(args):
                 scale_factor=args.scale_factor,
                 pose_loss=args.pose_loss)
 
-    # epoch=reloadmodel.reload_model(model,args.resume_path)
+    epoch=reloadmodel.reload_model(model,args.resume_path)
     epoch = 0
     
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0,2'
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
     # use_multiple_gpu= torch.cuda.device_count() > 1
-    use_multiple_gpu = True
+    use_multiple_gpu = False
     if use_multiple_gpu:
         # assert False, "Not implement- Eval with multiple gpus!"
+        # os.environ['CUDA_VISIBLE_DEVICES'] = '1,2'
         model = torch.nn.DataParallel(model).cuda()
     else:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+        os.environ['CUDA_VISIBLE_DEVICES'] = '1'
         model.cuda()
 
     freeze.freeze_batchnorm_stats(model)
@@ -128,13 +130,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Base params
-    parser.add_argument('--experiment_tag',default='htt')    
+    parser.add_argument('--experiment_tag',default='test_epoch_25')    
     parser.add_argument('--is_demo', action="store_true", help="show demo result")
     parser.add_argument('--is_eval_speed', default=False, type=bool, help="evaluate model inference speed and GPU memory usage")  
 
     parser.add_argument('--dataset_folder',default='/media/mldadmin/home/s123mdg31_07/Datasets/FPHAB/')
     parser.add_argument('--cache_folder',default='./ws/ckpts/')
-    parser.add_argument('--resume_path',default='./ws/ckpts/htt_fpha/checkpoint_45.pth')
+    parser.add_argument('--resume_path',default='ws/ckpts/new_train/model_best.pth')
 
     parser.add_argument("--model_type", choices=["ViT-B_16", "ViT-B_32", "ViT-L_16",
                                                 "ViT-L_32", "ViT-H_14", "R50-ViT-B_16"],

@@ -118,7 +118,7 @@ class TemporalNet(torch.nn.Module):
     
     def forward(self, batch_flatten,  verbose=False):           
         flatten_images=batch_flatten[TransQueries.IMAGE].cuda() # (64, 3, 224, 224)
-        # print(flatten_images.shape)
+
         #Loss
         total_loss = torch.Tensor([0]).cuda()
         losses = {}
