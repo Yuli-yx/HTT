@@ -7,13 +7,13 @@ from PIL import Image
 from datasets import fhbhands, h2ohands
 import lmdb
 #Resize original fpha imgs to (480,270)
-def resize_imgs_to_480_270_fpha(fhb_root="../fpha/"):
+def resize_imgs_fpha(fhb_root="../fpha/", out_size=(224, 224)):
 
     fhb_rgb_src = os.path.join(fhb_root, "Video_files")
-    fhb_rgb_dst = os.path.join(fhb_root, "Video_files_480")
+    fhb_rgb_dst = os.path.join(fhb_root, "Video_files_224")
 
 
-    def convert(src, dst, out_size=(480, 270)):
+    def convert(src, dst, out_size=out_size):
         dst_folder = os.path.dirname(dst)
         os.makedirs(dst_folder, exist_ok=True)
         if not os.path.exists(dst):
@@ -128,4 +128,6 @@ def convert_dataset_split_to_lmdb(dataset_name,dataset_folder,split):
     
 if __name__ == '__main__':
     # resize_imgs_to_480_270_fpha(fhb_root='/media/mldadmin/home/s123mdg31_07/Datasets/FPHAB')
-    convert_dataset_split_to_lmdb('fhbhands', '~/Datasets/FPHAB')
+    # resize_imgs_fpha(fhb_root='/media/mldadmin/home/s123mdg31_07/Datasets/FPHAB', out_size=(224, 224))
+    convert_dataset_split_to_lmdb('fhbhands', '/media/mldadmin/home/s123mdg31_07/Datasets/FPHAB', 'train')
+    convert_dataset_split_to_lmdb('fhbhands', '/media/mldadmin/home/s123mdg31_07/Datasets/FPHAB', 'test')

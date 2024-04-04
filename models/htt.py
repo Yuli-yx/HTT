@@ -9,6 +9,7 @@ from models.actionbranch import ActionClassificationBranch
 from models.utils import  To25DBranch,compute_hand_loss,loss_str2func
 from models.mlp import MultiLayerPerceptron
 from datasets.queries import BaseQueries, TransQueries 
+from models.ViT import VisionTransformer, CONFIGS
 
 
 class ResNet_(torch.nn.Module):
@@ -27,10 +28,11 @@ class ResNet_(torch.nn.Module):
     def forward(self, image):
         features, res_layer5 = self.base_net(image)
         return features, res_layer5
- 
+
 
 class TemporalNet(torch.nn.Module):
-    def __init__(self,  is_single_hand,
+    def __init__(self,  config,
+                        is_single_hand,
                         transformer_d_model,
                         transformer_dropout,
                         transformer_nhead,
@@ -69,6 +71,7 @@ class TemporalNet(torch.nn.Module):
         
         #Image Feature
         self.meshregnet = ResNet_(resnet_version=18)
+        self.vit = VisionTransformer(config, img_size=224, return_feat=True)
         self.transformer_pe=PositionalEncoding(d_model=transformer_d_model) 
 
         self.transformer_pose=Transformer_Encoder(d_model=transformer_d_model, 
@@ -114,7 +117,8 @@ class TemporalNet(torch.nn.Module):
  
     
     def forward(self, batch_flatten,  verbose=False):           
-        flatten_images=batch_flatten[TransQueries.IMAGE].cuda()
+        flatten_images=batch_flatten[TransQueries.IMAGE].cuda() # (64, 3, 224, 224)
+
         #Loss
         total_loss = torch.Tensor([0]).cuda()
         losses = {}
@@ -122,25 +126,27 @@ class TemporalNet(torch.nn.Module):
 
 
         #resnet for by-frame
-        flatten_in_feature, _ =self.meshregnet(flatten_images) 
+        # flatten_in_feature, _ =self.meshregnet(flatten_images) # (n_batch*128, 512)
+        flatten_in_feature = self.vit(flatten_images)
+        # print("SHAPE of ViT output", flatten_in_feature.shape)
         
         #Block P
-        batch_seq_pin_feature=flatten_in_feature.contiguous().view(-1,self.ntokens_pose,flatten_in_feature.shape[-1])
+        batch_seq_pin_feature=flatten_in_feature.contiguous().view(-1,self.ntokens_pose,flatten_in_feature.shape[-1]) # (n_batch*8, 16, 512)
         batch_seq_pin_pe=self.transformer_pe(batch_seq_pin_feature)
          
         batch_seq_pweights=batch_flatten['not_padding'].cuda().float().view(-1,self.ntokens_pose)
         batch_seq_pweights[:,0]=1.
         batch_seq_pmasks=(1-batch_seq_pweights).bool()
          
-        batch_seq_pout_feature,_=self.transformer_pose(src=batch_seq_pin_feature, src_pos=batch_seq_pin_pe,
+        batch_seq_pout_feature,_=self.transformer_pose(src=batch_seq_pin_feature, src_pos=batch_seq_pin_pe,  # （n_batch*8, 16, 512）
                             key_padding_mask=batch_seq_pmasks, verbose=False)
  
  
-        flatten_pout_feature=torch.flatten(batch_seq_pout_feature,start_dim=0,end_dim=1)
+        flatten_pout_feature=torch.flatten(batch_seq_pout_feature,start_dim=0,end_dim=1) #(64, 512)
         
         #hand pose
-        flatten_hpose=self.image_to_hand_pose(flatten_pout_feature)
-        flatten_hpose=flatten_hpose.view(-1,self.num_joints,3)
+        flatten_hpose=self.image_to_hand_pose(flatten_pout_feature)     # (64, 63)
+        flatten_hpose=flatten_hpose.view(-1,self.num_joints,3)          # (64, 21, 3)
         flatten_hpose_25d_3d=self.postprocess_hand_pose(sample=batch_flatten,scaletrans=flatten_hpose,verbose=verbose) 
 
         weights_hand_loss=batch_flatten['not_padding'].cuda().float()
@@ -150,7 +156,7 @@ class TemporalNet(torch.nn.Module):
         losses.update(hand_losses)
 
         #Object label
-        flatten_olabel_feature=self.image_to_olabel_embed(flatten_pout_feature)
+        flatten_olabel_feature=self.image_to_olabel_embed(flatten_pout_feature)    # (64, 768)
         
         weights_olabel_loss=batch_flatten['not_padding'].cuda().float()
         olabel_results,total_loss,olabel_losses=self.predict_object(sample=batch_flatten,features=flatten_olabel_feature,
@@ -159,12 +165,12 @@ class TemporalNet(torch.nn.Module):
         losses.update(olabel_losses)
     
         #Block A input
-        flatten_hpose2d=torch.flatten(flatten_hpose[:,:,:2],1,2)
-        flatten_ain_feature_hpose=self.hand_pose3d_to_action_input(flatten_hpose2d)
+        flatten_hpose2d=torch.flatten(flatten_hpose[:,:,:2],1,2)            #64, 42
+        flatten_ain_feature_hpose=self.hand_pose3d_to_action_input(flatten_hpose2d)  #64, 768
         flatten_ain_feature_olabel=self.olabel_to_action_input(olabel_results["obj_reg_possibilities"])
         
         flatten_ain_feature=torch.cat((flatten_pout_feature,flatten_ain_feature_hpose,flatten_ain_feature_olabel),dim=1)
-        flatten_ain_feature=self.concat_to_action_input(flatten_ain_feature)
+        flatten_ain_feature=self.concat_to_action_input(flatten_ain_feature)           #64, 2304
         batch_seq_ain_feature=flatten_ain_feature.contiguous().view(-1,self.ntokens_action,flatten_ain_feature.shape[-1])
         
         #Concat trainable token

@@ -3,13 +3,14 @@ from datetime import datetime
 
 from matplotlib import pyplot as plt
 import torch
-
+import os
 from libyana.exputils.argutils import save_args
 from libyana.modelutils import freeze
 from libyana.randomutils import setseeds
 from torch.utils.tensorboard import SummaryWriter
 from datasets import collate
 from models.htt import TemporalNet
+from models.ViT import CONFIGS
 from netscripts import epochpass
 from netscripts import reloadmodel, get_dataset
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -33,7 +34,7 @@ def main(args):
     experiment_tag = args.experiment_tag
     exp_id = f"{args.cache_folder}"+experiment_tag+"/"
     save_args(args, exp_id, "opt") 
-    
+    config = CONFIGS[args.model_type]
     print("**** Lets eval on", args.val_dataset, args.val_split)
     val_dataset, _ = get_dataset.get_dataset_htt(
         args.val_dataset,
@@ -46,7 +47,8 @@ def main(args):
         ntokens_action=args.ntokens_action,
         spacing=args.spacing,
         is_shifting_window=True,
-        split_type="actions"
+        split_type="actions", 
+        input_res=(224, 224)
     )
 
 
@@ -63,7 +65,8 @@ def main(args):
 
     #Re-load pretrained weights 
     print('**** Load pretrained-weights from resume_path', args.resume_path)
-    model= TemporalNet(dataset_info=dataset_info,
+    model= TemporalNet(config=config,
+                dataset_info=dataset_info,
                 is_single_hand=args.train_dataset!="h2ohands",
                 transformer_num_encoder_layers_action=args.enc_action_layers,
                 transformer_num_encoder_layers_pose=args.enc_pose_layers,
@@ -82,11 +85,17 @@ def main(args):
                 pose_loss=args.pose_loss)
 
     epoch=reloadmodel.reload_model(model,args.resume_path)
-    use_multiple_gpu= torch.cuda.device_count() > 1
+    epoch = 0
+    
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+    # use_multiple_gpu= torch.cuda.device_count() > 1
+    use_multiple_gpu = False
     if use_multiple_gpu:
-        assert False, "Not implement- Eval with multiple gpus!"
-        #model = torch.nn.DataParallel(model).cuda()
+        # assert False, "Not implement- Eval with multiple gpus!"
+        # os.environ['CUDA_VISIBLE_DEVICES'] = '1,2'
+        model = torch.nn.DataParallel(model).cuda()
     else:
+        os.environ['CUDA_VISIBLE_DEVICES'] = '1'
         model.cuda()
 
     freeze.freeze_batchnorm_stats(model)
@@ -111,7 +120,9 @@ def main(args):
         dataset_object_info=dataset_info.object_to_idx,     
         ntokens=args.ntokens_action,
         is_demo=args.is_demo,
-        epoch=epoch)
+        epoch=epoch,
+        eval_speed=args.is_eval_speed
+        )
  
          
 if __name__ == "__main__":
@@ -119,13 +130,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Base params
-    parser.add_argument('--experiment_tag',default='htt')    
-    parser.add_argument('--is_demo', action="store_true", help="show demo result")  
+    parser.add_argument('--experiment_tag',default='test_epoch_25')    
+    parser.add_argument('--is_demo', action="store_true", help="show demo result")
+    parser.add_argument('--is_eval_speed', default=False, type=bool, help="evaluate model inference speed and GPU memory usage")  
 
-    parser.add_argument('--dataset_folder',default='~/Datasets/FPHAB/')
+    parser.add_argument('--dataset_folder',default='/media/mldadmin/home/s123mdg31_07/Datasets/FPHAB/')
     parser.add_argument('--cache_folder',default='./ws/ckpts/')
-    parser.add_argument('--resume_path',default='./ws/ckpts/htt_fpha/checkpoint_45.pth')
+    parser.add_argument('--resume_path',default='ws/ckpts/new_train/model_best.pth')
 
+    parser.add_argument("--model_type", choices=["ViT-B_16", "ViT-B_32", "ViT-L_16",
+                                                "ViT-L_32", "ViT-H_14", "R50-ViT-B_16"],
+                        default="ViT-B_16",
+                        help="Which variant to use.")
     #Transformer parameters
     parser.add_argument("--ntokens_pose", type=int, default=16, help="N tokens for P")
     parser.add_argument("--ntokens_action", type=int, default=128, help="N tokens for A")
@@ -150,7 +166,7 @@ if __name__ == "__main__":
 
     # Training parameters
     parser.add_argument("--manual_seed", type=int, default=0)
-    parser.add_argument("--batch_size", type=int, default=8, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
     parser.add_argument("--workers", type=int, default=4, help="Number of workers for multiprocessing")
     parser.add_argument("--epochs", type=int, default=500)
    
@@ -172,7 +188,7 @@ if __name__ == "__main__":
                         help="Number of encoding layers in A")
     parser.add_argument('--dim_feedforward', default=2048, type=int,
                         help="Intermediate size of the feedforward layers in the transformer blocks")
-    parser.add_argument('--hidden_dim', default=512, type=int,
+    parser.add_argument('--hidden_dim', default=768, type=int,
                         help="Size of the embeddings (dimension of the transformer)")#256
     parser.add_argument('--dropout', default=0.1, type=float,
                         help="Dropout applied in the transformer")

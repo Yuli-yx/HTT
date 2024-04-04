@@ -9,14 +9,47 @@ from netscripts.position_evaluator import ZimEval
 from netscripts.utils import draw_single_run
 from datasets.queries import BaseQueries, TransQueries 
 
-def eval_speed(model, loader):
+
+def eval_inf_speed(model, loader, num_iterations=100):
+    import random
+    import time
     model.eval()
-    batch_sizes = [1, 2, 4, 8, 16, 32, 64]
+    batch_sizes = [8]
+    print('Start evaluating model inference time.')
     for batch_size in batch_sizes:
-        data = loader[]
-    for batch_idx, batch in enumerate(tqdm(loader)): 
-        with torch.no_grad():
-            loss, results, losses = model(batch)
+        
+        index = random.randint(0, len(loader) - 1)
+        index = 3
+        loader_iter = iter(loader)
+        for i in range(index + 1):
+            data = next(loader_iter)
+        # print(loader[BaseQueries.JOINTS3D].shape)
+        # for k, v in data.items():
+        #     print(f'{k}')
+        
+        for _ in range(10):
+            with torch.no_grad():
+                model(data)
+        
+        torch.cuda.synchronize()
+        memory_before = torch.cuda.memory_allocated()
+        
+        start_time = time.time()
+        for _ in tqdm(range(num_iterations)):
+            with torch.no_grad():
+                model(data)
+            torch.cuda.synchronize()
+        
+        elapsed_time = time.time() - start_time
+        average_time = elapsed_time / num_iterations  # 计算平均推理时间
+
+        # 显存占用测量后
+        memory_after = torch.cuda.memory_allocated()
+        memory_usage = (memory_after - memory_before) / (1024 ** 2)  # 转换为MB
+           
+        # print(f"batch_size: {batch_size}, average_time: {average_time:.4f} s, GPU_memory_usage: {memory_usage:.2f} MB")
+        print(f"batch_size: {batch_size}, average_time: {average_time:.4f} s")
+        torch.cuda.empty_cache()
 
 
 def epoch_pass(
@@ -36,15 +69,15 @@ def epoch_pass(
     is_demo,
     epoch,
     eval_speed=False
-
-):
+    ):
     if train:
         prefix = "train"
     else:
         prefix = "val"
         
     if eval_speed:
-        model.eval()
+        eval_inf_speed(model, loader, num_iterations=100)
+        return 0
 
     if is_single_hand:
         evaluators = {"joints3d": ZimEval(num_kp=21),"joints3d_cent":ZimEval(num_kp=20)}  
@@ -190,7 +223,7 @@ def epoch_pass(
                         save_dict["action_video_seq_recall_rate_mean"]*100))
 
     
-    if not tensorboard_writer is None:
+    if tensorboard_writer is not None:
         for k,v in save_dict.items():
                 if k in losses.keys() or k in ['learning_rate','total_loss']:
                     print(prefix+'/'+k,v,epoch)

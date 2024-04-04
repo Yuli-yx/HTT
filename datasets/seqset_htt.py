@@ -69,8 +69,8 @@ class SeqSet(Dataset):
         if BaseQueries.OBJIDX in query:
             sample[BaseQueries.OBJIDX]=self.pose_dataset.get_obj_idxs(idx)
 
-        center = np.array((480 / 2, 270 / 2))
-        scale = 480
+        center = np.array((self.inp_res[0] / 2, self.inp_res[1] / 2))
+        scale = self.inp_res[0]
 
         # Get original image
         if BaseQueries.IMAGE in query or TransQueries.IMAGE in query:

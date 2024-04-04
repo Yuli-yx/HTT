@@ -20,6 +20,7 @@ class FHBHands(object):
         spacing,
         is_shifting_window,
         split_type="actions",
+        input_res=(224, 224),
     ):
         super().__init__()
 
@@ -55,7 +56,9 @@ class FHBHands(object):
                 [0, 0, 0, 1],
             ]
         )
-        self.cam_intr = np.array([[1395.749023, 0, 935.732544], [0, 1395.749268, 540.681030], [0, 0, 1]])
+        self.cam_intr = np.array([[1395.749023, 0, 935.732544], 
+                                  [0, 1395.749268, 540.681030], 
+                                  [0, 0, 1]])
 
         self.reorder_idx = np.array(
             [0, 1, 6, 7, 8, 2, 9, 10, 11, 3, 12, 13, 14, 4, 15, 16, 17, 5, 18, 19, 20]
@@ -74,13 +77,16 @@ class FHBHands(object):
         self.root = dataset_folder
         self.info_root = os.path.join(self.root, "Subjects_info")
         self.info_split = os.path.join(self.root, "data_split_action_recognition.txt")
-        self.info_video_order_for_supervision= os.path.join(self.root,'video_annotation.json') 
+        self.info_video_order_for_supervision= os.path.join(self.root,'video_annotation.json')
 
         self.reduce_res = True
-        small_rgb = os.path.join(self.root, "Video_files_480")
+        # small_rgb = os.path.join(self.root, "Video_files_480")
+        small_rgb = os.path.join(self.root, "Video_files_224")
+        print(small_rgb)
         if os.path.exists(small_rgb) and self.reduce_res: 
             self.rgb_root = small_rgb
-            self.reduce_factor = 1 / 4
+            # self.reduce_factor = 1 / 4
+            self.reduce_factor = (input_res[0] / 1920., input_res[1] / 1080.)
         else:
             self.rgb_root = os.path.join(self.root, "Video_files")
             self.reduce_factor = 1
@@ -121,8 +127,12 @@ class FHBHands(object):
 
 
         # Infor for rendering
-        self.cam_intr[:2] = self.cam_intr[:2] * self.reduce_factor
-        self.image_size = [int(1920 * self.reduce_factor), int(1080 * self.reduce_factor)] 
+        
+        # modify cam_intr for 1920x1080 to 224x224
+        factor_matrix = np.array([[self.reduce_factor[0]], [self.reduce_factor[1]], [1]])
+        self.cam_intr = factor_matrix * self.cam_intr
+        # self.cam_intr[:2] = self.cam_intr[:2] * self.reduce_factor
+        self.image_size = [int(1920 * self.reduce_factor[0]), int(1080 * self.reduce_factor[1])] 
 
         if self.split=='train':
             try:
