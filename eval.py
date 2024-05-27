@@ -95,7 +95,7 @@ def main(args):
         # os.environ['CUDA_VISIBLE_DEVICES'] = '1,2'
         model = torch.nn.DataParallel(model).cuda()
     else:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+        os.environ['CUDA_VISIBLE_DEVICES'] = '2'
         model.cuda()
 
     freeze.freeze_batchnorm_stats(model)

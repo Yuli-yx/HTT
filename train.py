@@ -91,7 +91,8 @@ def main(args):
 
 
     model.vit.load_from(np.load(args.vit_pretrained_path))   #load pretrained weights
-    model.vit.parameters.requires_grad = False
+    for param in model.vit.parameters():
+        param.requires_grad = False
     
     if args.train_cont:
         epoch=reloadmodel.reload_model(model,args.resume_path)       
@@ -208,7 +209,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=2, help="Batch size")
     parser.add_argument("--workers", type=int, default=8, help="Number of workers for multiprocessing")
     parser.add_argument("--pyapt_id")
-    parser.add_argument("--epochs", type=int, default=45)
+    parser.add_argument("--epochs", type=int, default=80)
     parser.add_argument("--lr_decay_gamma", type=float, default= 0.5,help="Learning rate decay factor, if 1, no decay is effectively applied")
     parser.add_argument("--lr_decay_step", type=float, default=15)
     parser.add_argument("--lr", type=float, default=3e-5, help="Learning rate")
