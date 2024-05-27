@@ -24,8 +24,6 @@ def collate_fn(seq, extend_queries=[]):
     return collate.seq_extend_flatten_collate(seq,extend_queries)#seq_extend_collate(seq, extend_queries)
 
 
-
-
 def main(args):
     setseeds.set_all_seeds(args.manual_seed)
     # Initialize hosting
