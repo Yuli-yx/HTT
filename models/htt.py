@@ -10,6 +10,7 @@ from models.utils import  To25DBranch,compute_hand_loss,loss_str2func
 from models.mlp import MultiLayerPerceptron
 from datasets.queries import BaseQueries, TransQueries 
 from models.ViT import VisionTransformer, CONFIGS
+from transformers import ViTModel
 
 
 class ResNet_(torch.nn.Module):
@@ -71,7 +72,13 @@ class TemporalNet(torch.nn.Module):
         
         #Image Feature
         self.meshregnet = ResNet_(resnet_version=18)
-        self.vit = VisionTransformer(config, img_size=224, return_feat=True)
+        # self.vit = VisionTransformer(config, img_size=224, return_feat=True)
+        
+        self.vit = ViTModel.from_pretrained('google/vit-base-patch16-224-in21k')
+        print(self.vit)
+        
+        
+        
         self.transformer_pe=PositionalEncoding(d_model=transformer_d_model) 
 
         self.transformer_pose=Transformer_Encoder(d_model=transformer_d_model, 
@@ -127,7 +134,10 @@ class TemporalNet(torch.nn.Module):
 
         #resnet for by-frame
         # flatten_in_feature, _ =self.meshregnet(flatten_images) # (n_batch*128, 512)
-        flatten_in_feature = self.vit(flatten_images)
+        # flatten_in_feature = self.vit(flatten_images)
+        
+        vit_outputs = self.vit(flatten_images)
+        flatten_in_feature = vit_outputs.last_hidden_state[:,0]              # 128,197,768
         # print("SHAPE of ViT output", flatten_in_feature.shape)
         
         #Block P

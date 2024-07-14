@@ -89,11 +89,12 @@ def epoch_pass(
     objlabel_evaluator = FrameClassificationEvaluator(dataset_object_info)
     
     
-    model.eval()
+    if not train:
+        model.eval()
     avg_meters = AverageMeters()
      
      
-    for batch_idx, batch in enumerate(tqdm(loader)): 
+    for batch_idx, batch in enumerate(tqdm(loader)):
         if train:
             loss, results, losses = model(batch)  
         else:

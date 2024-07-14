@@ -90,9 +90,15 @@ def main(args):
                 pose_loss=args.pose_loss)                                           #l1
 
 
-    model.vit.load_from(np.load(args.vit_pretrained_path))   #load pretrained weights
+    # model.vit.load_from(np.load(args.vit_pretrained_path))   #load pretrained weights
     for param in model.vit.parameters():
         param.requires_grad = False
+    
+    for layer in model.vit.encoder.layer[-2:]:
+        for param in layer.intermediate.parameters():
+            param.requires_grad = True
+        for param in layer.output.parameters():
+            param.requires_grad = True
     
     if args.train_cont:
         epoch=reloadmodel.reload_model(model,args.resume_path)       
@@ -101,7 +107,7 @@ def main(args):
     epoch+=1
     
     #to multiple GPUs
-    # os.environ["CUDA_VISIBLE_DEVICES"] = args.multi_gpu
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.multi_gpu
     use_multiple_gpu= torch.cuda.device_count() > 1
     if use_multiple_gpu:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
